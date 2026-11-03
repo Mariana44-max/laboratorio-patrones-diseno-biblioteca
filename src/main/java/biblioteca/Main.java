@@ -1,32 +1,30 @@
 
 package biblioteca;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 public class Main {
     public static void main(String[] args) {
 
-        List<Sala> disponibles = List.of(
-            new Sala("A", "Sala A", 2),
-            new Sala("B", "Sala B", 4),
-            new Sala("C", "Sala C", 6),
-            new Sala("D", "Sala D", 8)
+        RepositorioSalas repositorioSalas =
+                new RepositorioSalasMemoria();
+
+        RepositorioReservas repositorioReservas =
+                new RepositorioReservasMemoria();
+
+        ReservaFacade facade =
+                new ReservaFacade(repositorioSalas, repositorioReservas);
+
+        Estudiante estudiante = new Estudiante("1001", "Laura");
+
+        facade.realizarReserva(
+                estudiante,
+                LocalDate.now().plusDays(7),
+                LocalTime.of(14, 0),
+                2,
+                4,
+                new SeleccionPorCapacidad()
         );
-
-        EstrategiaSeleccionSala porCapacidad = new SeleccionPorCapacidad();
-
-        System.out.println("Para 4 personas: "
-                + porCapacidad.seleccionar(disponibles, 4).orElse(null));
-
-        EstrategiaSeleccionSala preferida = new SeleccionSalaPreferida("C");
-
-        System.out.println("Preferida C: "
-                + preferida.seleccionar(disponibles, 4).orElse(null));
-
-        EstrategiaSeleccionSala preferidaNoAdecuada =
-                new SeleccionSalaPreferida("B");
-
-        System.out.println("Preferida B para 7: "
-                + preferidaNoAdecuada.seleccionar(disponibles, 7).orElse(null));
     }
 }
