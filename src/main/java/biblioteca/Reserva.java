@@ -3,8 +3,11 @@ package biblioteca;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Reserva {
+
     private final String codigo;
     private final Estudiante estudiante;
     private final LocalDate fecha;
@@ -12,8 +15,13 @@ public class Reserva {
     private final int duracionHoras;
     private final int cantidadPersonas;
     private final Sala sala;
+
     private EstadoReserva estado;
 
+    // Lista de observadores
+    private final List<ObservadorReserva> observadores = new ArrayList<>();
+
+    // Constructor
     Reserva(String codigo, Estudiante estudiante, LocalDate fecha,
             LocalTime horaInicio, int duracionHoras,
             int cantidadPersonas, Sala sala) {
@@ -28,6 +36,7 @@ public class Reserva {
         this.estado = new Pendiente();
     }
 
+    // Métodos getters
     public String getCodigo() {
         return codigo;
     }
@@ -60,6 +69,7 @@ public class Reserva {
         return estado.nombre();
     }
 
+    // Operaciones delegadas al estado actual
     public void confirmar() {
         estado.confirmar(this);
     }
@@ -72,13 +82,37 @@ public class Reserva {
         estado.finalizar(this);
     }
 
-    void cambiarEstado(EstadoReserva nuevoEstado) {
-        this.estado = nuevoEstado;
+    // Agregar un observador
+    public void agregarObservador(ObservadorReserva observador) {
+        if (observador != null) {
+            observadores.add(observador);
+        }
     }
 
+    // Retirar un observador
+    public void retirarObservador(ObservadorReserva observador) {
+        observadores.remove(observador);
+    }
+
+    // Cambiar el estado y notificar a los observadores
+    void cambiarEstado(EstadoReserva nuevoEstado) {
+
+        String anterior = estado.nombre();
+
+        this.estado = nuevoEstado;
+
+        String actual = estado.nombre();
+
+        for (ObservadorReserva observador : List.copyOf(observadores)) {
+            observador.actualizar(this, anterior, actual);
+        }
+    }
+
+    // Mostrar información de la reserva
     @Override
     public String toString() {
-        return "Reserva " + codigo + " | " + estudiante.getNombre()
+        return "Reserva " + codigo
+                + " | " + estudiante.getNombre()
                 + " | " + fecha + " " + horaInicio
                 + " | " + sala
                 + " | Estado: " + getNombreEstado();

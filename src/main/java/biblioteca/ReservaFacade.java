@@ -10,23 +10,35 @@ public class ReservaFacade {
 
     private final RepositorioSalas repositorioSalas;
     private final RepositorioReservas repositorioReservas;
+    private final List<ObservadorReserva> observadores;
 
-    public ReservaFacade(RepositorioSalas repositorioSalas,
-                         RepositorioReservas repositorioReservas) {
+    public ReservaFacade(
+            RepositorioSalas repositorioSalas,
+            RepositorioReservas repositorioReservas,
+            List<ObservadorReserva> observadores) {
+
         this.repositorioSalas = repositorioSalas;
         this.repositorioReservas = repositorioReservas;
+        this.observadores = List.copyOf(observadores);
     }
 
     public Optional<Reserva> realizarReserva(
-            Estudiante estudiante, LocalDate fecha, LocalTime hora,
-            int duracion, int personas, EstrategiaSeleccionSala estrategia) {
+            Estudiante estudiante,
+            LocalDate fecha,
+            LocalTime hora,
+            int duracion,
+            int personas,
+            EstrategiaSeleccionSala estrategia) {
 
-        List<Sala> disponibles = repositorioSalas.obtenerDisponibles();
+        List<Sala> disponibles =
+                repositorioSalas.obtenerDisponibles();
 
-        Optional<Sala> sala = estrategia.seleccionar(disponibles, personas);
+        Optional<Sala> sala =
+                estrategia.seleccionar(disponibles, personas);
 
         if (sala.isEmpty()) {
-            System.out.println("No hay una sala disponible que cumpla la solicitud.");
+            System.out.println(
+                    "No hay una sala disponible que cumpla la solicitud.");
             return Optional.empty();
         }
 
@@ -39,6 +51,10 @@ public class ReservaFacade {
                 .sala(sala.get())
                 .build();
 
+        // Suscribir observadores
+        observadores.forEach(reserva::agregarObservador);
+
+        // Guardar y confirmar reserva
         repositorioReservas.guardar(reserva);
         reserva.confirmar();
 
