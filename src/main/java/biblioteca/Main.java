@@ -10,11 +10,8 @@ public class Main {
     public static void main(String[] args) {
 
         // Crear repositorios
-        RepositorioSalas repositorioSalas =
-                new RepositorioSalasMemoria();
-
-        RepositorioReservas repositorioReservas =
-                new RepositorioReservasMemoria();
+        RepositorioSalas salas = new RepositorioSalasMemoria();
+        RepositorioReservas reservas = new RepositorioReservasMemoria();
 
         // Crear observadores
         List<ObservadorReserva> observadores = List.of(
@@ -23,23 +20,16 @@ public class Main {
         );
 
         // Crear fachada
-        ReservaFacade facade = new ReservaFacade(
-                repositorioSalas,
-                repositorioReservas,
-                observadores
-        );
+        ReservaFacade fachada =
+                new ReservaFacade(salas, reservas, observadores);
 
-        Estudiante estudiante = new Estudiante("1001", "Laura");
+        Estudiante laura = new Estudiante("E001", "Laura");
 
-        System.out.println("================================");
-        System.out.println(" PRUEBAS DEL PATRON STATE");
-        System.out.println("================================");
+        // ESCENARIO PRINCIPAL
+        System.out.println("\n=== ESCENARIO PRINCIPAL ===");
 
-        // PRUEBA 1: Confirmar una reserva pendiente
-        System.out.println("\nPRUEBA 1: Confirmar reserva pendiente");
-
-        Reserva reserva1 = facade.realizarReserva(
-                estudiante,
+        Reserva reserva = fachada.realizarReserva(
+                laura,
                 LocalDate.now().plusDays(7),
                 LocalTime.of(14, 0),
                 2,
@@ -47,52 +37,57 @@ public class Main {
                 new SeleccionPorCapacidad()
         ).orElseThrow();
 
-        System.out.println("Resultado: " + reserva1.getNombreEstado());
+        System.out.println(reserva);
 
-        // PRUEBA 2: Cancelar una reserva confirmada
-        System.out.println("\nPRUEBA 2: Cancelar reserva confirmada");
+        System.out.println("\nLaura cancela la reserva:");
+        reserva.cancelar();
+        System.out.println(reserva);
 
-        reserva1.cancelar();
-
-        System.out.println("Resultado: " + reserva1.getNombreEstado());
-
-        // PRUEBA 3: Intentar confirmar una reserva cancelada
-        System.out.println("\nPRUEBA 3: Confirmar reserva cancelada");
+        System.out.println("\nIntento inválido: confirmar una reserva cancelada.");
 
         try {
-            reserva1.confirmar();
-        } catch (IllegalStateException e) {
-            System.out.println("Error esperado: " + e.getMessage());
+            reserva.confirmar();
+        } catch (IllegalStateException ex) {
+            System.out.println("Operación rechazada: " + ex.getMessage());
         }
 
-        // Crear una segunda reserva
-        Reserva reserva2 = facade.realizarReserva(
-                estudiante,
+        // PRUEBA DE SALA PREFERIDA
+        System.out.println("\n=== PRUEBA DE SALA PREFERIDA ===");
+
+        fachada.realizarReserva(
+                new Estudiante("E002", "Andrés"),
                 LocalDate.now().plusDays(8),
                 LocalTime.of(10, 0),
                 2,
+                4,
+                new SeleccionSalaPreferida("C")
+        ).ifPresent(System.out::println);
+
+        // PRUEBA SIN SALA ADECUADA
+        System.out.println("\n=== PRUEBA SIN SALA ADECUADA ===");
+
+        fachada.realizarReserva(
+                new Estudiante("E003", "Camila"),
+                LocalDate.now().plusDays(9),
+                LocalTime.of(9, 0),
+                2,
+                10,
+                new SeleccionPorCapacidad()
+        );
+
+        // PRUEBA DE FINALIZACIÓN
+        System.out.println("\n=== PRUEBA DE FINALIZACIÓN ===");
+
+        Reserva otra = fachada.realizarReserva(
+                new Estudiante("E004", "Samuel"),
+                LocalDate.now().plusDays(10),
+                LocalTime.of(11, 0),
+                1,
                 2,
                 new SeleccionPorCapacidad()
         ).orElseThrow();
 
-        // PRUEBA 4: Finalizar una reserva confirmada
-        System.out.println("\nPRUEBA 4: Finalizar reserva confirmada");
-
-        reserva2.finalizar();
-
-        System.out.println("Resultado: " + reserva2.getNombreEstado());
-
-        // PRUEBA 5: Intentar cancelar una reserva finalizada
-        System.out.println("\nPRUEBA 5: Cancelar reserva finalizada");
-
-        try {
-            reserva2.cancelar();
-        } catch (IllegalStateException e) {
-            System.out.println("Error esperado: " + e.getMessage());
-        }
-
-        System.out.println("\n================================");
-        System.out.println(" FIN DE LAS PRUEBAS");
-        System.out.println("================================");
+        otra.finalizar();
+        System.out.println(otra);
     }
 }
